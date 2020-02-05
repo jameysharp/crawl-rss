@@ -4,7 +4,7 @@ mkShell {
   name = "crawl-rss";
 
   buildInputs = [
-    python3
+    (python3.withPackages (ps: [ ps.ipython ]))
 
     (poetry.overrideAttrs (oldAttrs: {
       propagatedBuildInputs = oldAttrs.propagatedBuildInputs ++ [ python3.pkgs.setuptools ];
