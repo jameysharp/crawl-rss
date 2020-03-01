@@ -1,4 +1,5 @@
 __pycache__/
 dist/
 .mypy_cache/
+.httpcache/
 *.egg-info/

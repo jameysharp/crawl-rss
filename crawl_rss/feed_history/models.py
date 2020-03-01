@@ -25,6 +25,7 @@ class Feed(app.Base):
     archive_pages = orm.relationship(
         'FeedArchivePage',
         backref='feed',
+        cascade='all, delete-orphan',
         order_by='FeedArchivePage.order',
         collection_class=ordering_list('order'),
     )
@@ -41,6 +42,7 @@ class FeedArchivePage(app.Base):
     entries = orm.relationship(
         'FeedPageEntry',
         backref='archive_page',
+        cascade='all, delete-orphan',
         collection_class=attribute_mapped_collection('guid'),
     )
 

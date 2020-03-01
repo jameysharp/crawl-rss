@@ -50,7 +50,7 @@ class FeedDocument(object):
         return FeedType.UNSPECIFIED
 
     def get_link(self, rel: Text) -> Optional[Text]:
-        for link in self.doc.get('links', ()):
+        for link in self.doc.feed.get('links', ()):
             if link.rel == rel:
                 return link.href
         return None
@@ -79,6 +79,8 @@ class UpdateFeedHistory:
         # FIXME: try to reuse existing page and entry objects?
         # delete existing pages that have changed
         del feed.archive_pages[self.keep_existing:]
+
+        db.flush()
 
         # append the new archive pages
         feed.archive_pages.extend(self.new_pages)

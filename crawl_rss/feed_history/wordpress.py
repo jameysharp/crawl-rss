@@ -73,7 +73,7 @@ def from_wordpress(
 
 
 def is_wordpress_generated(feed: FeedDocument) -> bool:
-    for link in requests.utils.parse_header_links(feed.doc.headers['Link']):
+    for link in requests.utils.parse_header_links(feed.doc.headers.get('Link', '')):
         if link.get('rel') == 'https://api.w.org/':
             return True
 
