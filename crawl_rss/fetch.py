@@ -28,6 +28,8 @@ def crawl(url: Text) -> None:
         http.mount('https://', cache)
         http.mount('http://', cache)
 
+        http.headers['User-Agent'] = b'jamey@minilop.net'
+
         crawl_feed_history(db, http, url)
         db.commit()
 
