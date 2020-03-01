@@ -6,7 +6,7 @@ from .models import FeedArchivePage
 
 
 @crawler_registry
-def from_rfc5005_complete(
+def from_rfc5005(
     http: requests.Session,
     base: FeedDocument,
     old_pages: List[FeedArchivePage],
@@ -14,15 +14,7 @@ def from_rfc5005_complete(
     if base.feed_type == FeedType.COMPLETE:
         # feed gets one FeedArchivePage containing all of base's FeedPageEntries
         return UpdateFeedHistory(0, [base.as_archive_page()])
-    return None
 
-
-@crawler_registry
-def from_rfc5005_archived(
-    http: requests.Session,
-    base: FeedDocument,
-    old_pages: List[FeedArchivePage],
-) -> Optional[UpdateFeedHistory]:
     # walk backwards until we hit an existing FeedArchivePage
     existing_pages = {page.url: keep for keep, page in enumerate(old_pages, 1)}
     seen: Set[Text] = set()
