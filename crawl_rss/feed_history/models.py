@@ -20,7 +20,7 @@ class Feed(app.Base):
 
     id = Column(Integer, primary_key=True)
     url = Column(Text, unique=True, nullable=False)
-    metadata = Column(JSON, nullable=False)
+    properties = Column(JSON, nullable=False)
 
     archive_pages = orm.relationship(
         'FeedArchivePage',
@@ -49,7 +49,7 @@ class FeedArchivePage(app.Base):
         UniqueConstraint(url, feed_id),
     )
 
-    def last_updated_entry(self) -> Optional[FeedPageEntry]:
+    def last_updated_entry(self) -> Optional['FeedPageEntry']:
         return max(self.entries.values(), default=None, key=operator.attrgetter('updated'))
 
 

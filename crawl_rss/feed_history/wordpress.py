@@ -1,8 +1,10 @@
 import itertools
+import operator
 import requests
 from typing import Iterator, List, Optional, Text, Tuple
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
-from .common import crawler_registry, FeedDocument
+from .common import crawler_registry, FeedDocument, UpdateFeedHistory
 from .models import FeedArchivePage
 
 
@@ -11,10 +13,9 @@ def from_wordpress(
     http: requests.Session,
     base: FeedDocument,
     old_pages: List[FeedArchivePage],
-    new_pages: List[FeedArchivePage],
-) -> int:
+) -> Optional[UpdateFeedHistory]:
     if not is_wordpress_generated(base):
-        return 0
+        return None
 
     # try synthesizing from WordPress query args; base is not used as a
     # FeedArchivePage in this case. refetch the oldest page to validate that
@@ -27,6 +28,7 @@ def from_wordpress(
     ))
 
     urls = wordpress_pagination_urls(base.url)
+    new_pages = []
 
     if all(old.url == new for old, new in zip(old_pages, urls)):
         # if we have existing pages, re-fetch them, starting from the newest
@@ -38,7 +40,7 @@ def from_wordpress(
             if new_page is None:
                 # if some of the old pages have disappeared, there's no point
                 # looking for pages we never saw before
-                urls = ()
+                urls = iter(())
             else:
                 old_last = old_page.last_updated_entry()
                 new_last = new_page.last_updated_entry()
@@ -64,15 +66,18 @@ def from_wordpress(
         if e.response.status_code != 404:
             raise
 
-    return keep_existing
+    if not keep_existing and not new_pages:
+        return None
+
+    return UpdateFeedHistory(keep_existing, new_pages)
 
 
-def is_wordpress_generated(feed: FeedDocument):
-    for link in feed.link_headers:
+def is_wordpress_generated(feed: FeedDocument) -> bool:
+    for link in requests.utils.parse_header_links(feed.doc.headers['Link']):
         if link.get('rel') == 'https://api.w.org/':
             return True
 
-    generator = feed.doc.get(generator_detail) or {}
+    generator = feed.doc.get('generator_detail') or {}
     for ident in generator.values():
         ident = ident.lower()
         if "wordpress.com" in ident or "wordpress.org" in ident:
@@ -104,6 +109,7 @@ def refresh_wordpress_pages(
 
     found_later = False
     for old_page in reversed(old_pages[1:]):
+        new_page = None
         try:
             new_page = FeedDocument(http, old_page.url).as_archive_page()
             found_later = True
@@ -112,7 +118,6 @@ def refresh_wordpress_pages(
             # we've already found later pages, in which case even 404 is bad
             if found_later or e.response.status_code != 404:
                 raise
-            new_page = None
         yield old_page, new_page
 
     yield old_pages[0], base.as_archive_page()

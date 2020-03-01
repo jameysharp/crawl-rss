@@ -1,14 +1,19 @@
+from dataclasses import dataclass
+import datetime
 from enum import Enum
 import feedparser
 import requests
 from sqlalchemy import orm
 from typing import List, Mapping, Optional, Text
 
+from . import models
+
 
 class Registry(list):
     def __call__(self, x):
         self.append(x)
         return x
+
 
 crawler_registry = Registry()
 
@@ -24,11 +29,10 @@ class FeedType(Enum):
 
 
 class FeedDocument(object):
-    def __init__(self, http: requests.Session, url: Text, headers: Mapping[Text, Text]={}):
+    def __init__(self, http: requests.Session, url: Text, headers: Mapping[Text, Text] = {}):
         with http.get(url, stream=True, headers=headers) as response:
             response.raise_for_status()
             response.headers.setdefault('Content-Location', response.url)
-            self.link_headers: List[Mapping[Text, Text]] = response.links
             self.doc: feedparser.FeedParserDict = feedparser.parse(response.raw, response_headers=response.headers)
 
     @property
@@ -39,16 +43,17 @@ class FeedDocument(object):
     def feed_type(self) -> FeedType:
         for short, ns in self.doc.namespaces.items():
             if ns == "http://purl.org/syndication/history/1.0":
-                if (short + "_complete") in doc.feed:
+                if (short + "_complete") in self.doc.feed:
                     return FeedType.COMPLETE
-                if (short + "_archive") in doc.feed:
+                if (short + "_archive") in self.doc.feed:
                     return FeedType.ARCHIVE
         return FeedType.UNSPECIFIED
 
-    def get_link(rel: Text) -> Optional[Text]:
+    def get_link(self, rel: Text) -> Optional[Text]:
         for link in self.doc.get('links', ()):
             if link.rel == rel:
                 return link.href
+        return None
 
     def as_archive_page(self) -> models.FeedArchivePage:
         page = models.FeedArchivePage(url=self.url)
@@ -63,6 +68,20 @@ class FeedDocument(object):
             if entry.guid and entry.published:
                 page.entries.set(entry)
         return page
+
+
+@dataclass(frozen=True)
+class UpdateFeedHistory:
+    keep_existing: int
+    new_pages: List[models.FeedArchivePage]
+
+    def __call__(self, db: orm.Session, feed: models.Feed) -> None:
+        # FIXME: try to reuse existing page and entry objects?
+        # delete existing pages that have changed
+        del feed.archive_pages[self.keep_existing:]
+
+        # append the new archive pages
+        feed.archive_pages.extend(self.new_pages)
 
 
 def crawl_feed_history(db: orm.Session, http: requests.Session, url: Text) -> models.Feed:
@@ -93,20 +112,14 @@ def crawl_feed_history(db: orm.Session, http: requests.Session, url: Text) -> mo
         db.add(feed)
 
     # XXX: be more selective?
-    feed.metadata = base.doc.feed
+    feed.properties = base.doc.feed
 
-    new_archive_pages = []
-    keep_existing = 0
     for crawler in crawler_registry:
-        keep_existing = crawler(http, base, feed.archive_pages, new_archive_pages)
-        if keep_existing or new_archive_pages:
+        apply_changes = crawler(http, base, feed.archive_pages)
+        if apply_changes is not None:
             break
     else:
         raise FeedError("no history found for feed {!r}".format(url))
 
-    # FIXME: try to reuse existing page and entry objects?
-    # delete existing pages that have changed
-    del feed.archive_pages[keep_existing:]
-
-    # append the new archive pages
-    feed.archive_pages.extend(new_archive_pages)
+    apply_changes(db, feed)
+    return feed

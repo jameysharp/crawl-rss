@@ -1,7 +1,7 @@
 import requests
-from typing import List
+from typing import List, Optional, Set, Text
 
-from .common import crawler_registry, FeedDocument, FeedType
+from .common import crawler_registry, FeedDocument, FeedType, UpdateFeedHistory
 from .models import FeedArchivePage
 
 
@@ -10,12 +10,11 @@ def from_rfc5005_complete(
     http: requests.Session,
     base: FeedDocument,
     old_pages: List[FeedArchivePage],
-    new_pages: List[FeedArchivePage],
-) -> int:
+) -> Optional[UpdateFeedHistory]:
     if base.feed_type == FeedType.COMPLETE:
         # feed gets one FeedArchivePage containing all of base's FeedPageEntries
-        new_pages.append(base.as_archive_page())
-    return 0
+        return UpdateFeedHistory(0, [base.as_archive_page()])
+    return None
 
 
 @crawler_registry
@@ -23,11 +22,12 @@ def from_rfc5005_archived(
     http: requests.Session,
     base: FeedDocument,
     old_pages: List[FeedArchivePage],
-    new_pages: List[FeedArchivePage],
-) -> int:
+) -> Optional[UpdateFeedHistory]:
     # walk backwards until we hit an existing FeedArchivePage
     existing_pages = {page.url: keep for keep, page in enumerate(old_pages, 1)}
-    seen = set()
+    seen: Set[Text] = set()
+    keep_existing = 0
+    new_pages = []
     page = base
     while True:
         prev_archive = page.get_link('prev-archive')
@@ -51,10 +51,11 @@ def from_rfc5005_archived(
         })
         new_pages.append(page.as_archive_page())
 
-    if keep_existing or new_pages:
-        # found some RFC5005 archives
-        new_pages.reverse()
-        # base is the newest FeedArchivePage
-        new_pages.append(base.as_archive_page())
+    if not keep_existing and not new_pages:
+        return None
 
-    return keep_existing
+    # found some RFC5005 archives
+    new_pages.reverse()
+    # base is the newest FeedArchivePage
+    new_pages.append(base.as_archive_page())
+    return UpdateFeedHistory(keep_existing, new_pages)
