@@ -17,19 +17,24 @@ engine = create_engine('sqlite:///:memory:', echo=True)
 Session = sessionmaker(bind=engine)
 
 
+def http_session() -> requests.Session:
+    http = requests.Session()
+    http.headers['User-Agent'] = b'jamey@minilop.net'
+
+    cache = cachecontrol.CacheControlAdapter(
+        cache=FileCache('.httpcache'),
+        heuristic=LastModified(),
+    )
+    http.mount('https://', cache)
+    http.mount('http://', cache)
+
+    return http
+
+
 def crawl(url: Text) -> None:
     app.Base.metadata.create_all(engine)
 
-    with requests.Session() as http, closing(Session()) as db:
-        cache = cachecontrol.CacheControlAdapter(
-            cache=FileCache('.httpcache'),
-            heuristic=LastModified(),
-        )
-        http.mount('https://', cache)
-        http.mount('http://', cache)
-
-        http.headers['User-Agent'] = b'jamey@minilop.net'
-
+    with http_session() as http, closing(Session()) as db:
         crawl_feed_history(db, http, url)
         db.commit()
 
