@@ -16,6 +16,9 @@ mkShell {
     mypy
     (with python3.pkgs; toPythonApplication black)
     (with python3.pkgs; toPythonApplication flake8)
+
+    libxml2
+    libxslt
   ];
 
   # settings to make various things work in virtualenv:
