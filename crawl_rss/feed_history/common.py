@@ -10,6 +10,18 @@ from . import models
 
 
 class Registry(list):
+    """
+    A registry is a list which also acts as a decorator, so you can add items
+    to the list by decorating them.
+
+    >>> register = Registry()
+    >>> @register
+    ... def foo():
+    ...     print("foo")
+    >>> register[0]()
+    foo
+    """
+
     def __call__(self, x):
         self.append(x)
         return x

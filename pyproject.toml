@@ -22,7 +22,7 @@ sqlalchemy-stubs = "^0.3.0"
 black = {version = "^20.8b1", allow-prereleases = true}
 
 [tool.pytest.ini_options]
-addopts = "--black --flakes --mypy"
+addopts = "--black --flakes --mypy --doctest-modules"
 testpaths = "crawl_rss"
 
 [build-system]
