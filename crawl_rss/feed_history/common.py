@@ -4,12 +4,15 @@ from enum import Enum
 import feedparser
 import requests
 from sqlalchemy import orm
-from typing import List, Mapping, Optional, Text
+from typing import Callable, List, Mapping, Optional, Text, TypeVar, cast
 
 from . import models
 
 
-class Registry(list):
+T = TypeVar("T")
+
+
+class Registry(List[T]):
     """
     A registry is a list which also acts as a decorator, so you can add items
     to the list by decorating them.
@@ -22,12 +25,9 @@ class Registry(list):
     foo
     """
 
-    def __call__(self, x):
+    def __call__(self, x: T) -> T:
         self.append(x)
         return x
-
-
-crawler_registry = Registry()
 
 
 class FeedError(Exception):
@@ -68,7 +68,7 @@ class FeedDocument(object):
     def get_link(self, rel: Text) -> Optional[Text]:
         for link in self.doc.feed.get("links", ()):
             if link.rel == rel:
-                return link.href
+                return cast(Text, link.href)
         return None
 
     def as_archive_page(self) -> models.FeedArchivePage:
@@ -138,7 +138,9 @@ def crawl_feed_history(
     feed.properties = base.doc.feed
 
     for crawler in crawler_registry:
-        apply_changes = crawler(http, base, feed.archive_pages)
+        apply_changes = crawler(
+            http, base, cast(List[models.FeedArchivePage], feed.archive_pages)
+        )
         if apply_changes is not None:
             break
     else:
@@ -146,3 +148,10 @@ def crawl_feed_history(
 
     apply_changes(db, feed)
     return feed
+
+
+Crawler = Callable[
+    [requests.Session, FeedDocument, List[models.FeedArchivePage]],
+    Optional[UpdateFeedHistory],
+]
+crawler_registry: Registry[Crawler] = Registry()

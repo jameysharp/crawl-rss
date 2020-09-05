@@ -92,10 +92,10 @@ def is_wordpress_generated(feed: FeedDocument) -> bool:
 def wordpress_pagination_urls(url: Text) -> Iterator[Text]:
     yield url
     for page in itertools.count(2):
-        yield query_string_replace(url, paged=page)
+        yield query_string_replace(url, paged=str(page))
 
 
-def query_string_replace(url: Text, **kwargs) -> Text:
+def query_string_replace(url: Text, **kwargs: Text) -> Text:
     parts = urlsplit(url)
     query = [(k, v) for k, v in parse_qsl(parts.query) if k not in kwargs]
     query.extend(sorted(kwargs.items()))
