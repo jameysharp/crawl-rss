@@ -22,7 +22,7 @@ def from_rfc5005(
     new_pages = []
     page = base
     while True:
-        prev_archive = page.get_link('prev-archive')
+        prev_archive = page.get_link("prev-archive")
         if not prev_archive:
             break
 
@@ -35,11 +35,15 @@ def from_rfc5005(
         if keep_existing:
             break
 
-        page = FeedDocument(http, prev_archive, headers={
-            # archive documents should always be taken from the cache
-            "Cache-Control": "max-stale",
-            "Referer": page.url,
-        })
+        page = FeedDocument(
+            http,
+            prev_archive,
+            headers={
+                # archive documents should always be taken from the cache
+                "Cache-Control": "max-stale",
+                "Referer": page.url,
+            },
+        )
         new_pages.append(page.as_archive_page())
 
     if not keep_existing and not new_pages:

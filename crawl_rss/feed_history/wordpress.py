@@ -20,12 +20,15 @@ def from_wordpress(
     # try synthesizing from WordPress query args; base is not used as a
     # FeedArchivePage in this case. refetch the oldest page to validate that
     # WordPress-style pagination will work
-    base = FeedDocument(http, query_string_replace(
-        base.url,
-        feed="atom",
-        order="ASC",
-        orderby="modified",
-    ))
+    base = FeedDocument(
+        http,
+        query_string_replace(
+            base.url,
+            feed="atom",
+            order="ASC",
+            orderby="modified",
+        ),
+    )
 
     urls = wordpress_pagination_urls(base.url)
     new_pages = []
@@ -35,7 +38,7 @@ def from_wordpress(
         # and working backward, until we find one where the last-updated entry
         # hasn't changed.
         keep_existing = len(old_pages)
-        key = operator.attrgetter('updated', 'link')
+        key = operator.attrgetter("updated", "link")
         for old_page, new_page in refresh_wordpress_pages(http, base, old_pages):
             if new_page is None:
                 # if some of the old pages have disappeared, there's no point
@@ -73,11 +76,11 @@ def from_wordpress(
 
 
 def is_wordpress_generated(feed: FeedDocument) -> bool:
-    for link in requests.utils.parse_header_links(feed.doc.headers.get('Link', '')):
-        if link.get('rel') == 'https://api.w.org/':
+    for link in requests.utils.parse_header_links(feed.doc.headers.get("Link", "")):
+        if link.get("rel") == "https://api.w.org/":
             return True
 
-    generator = feed.doc.get('generator_detail') or {}
+    generator = feed.doc.get("generator_detail") or {}
     for ident in generator.values():
         ident = ident.lower()
         if "wordpress.com" in ident or "wordpress.org" in ident:

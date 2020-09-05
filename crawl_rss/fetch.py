@@ -10,13 +10,13 @@ from .feed_history.common import crawl_feed_history
 
 
 HTTPConnection.debuglevel = 1  # type: ignore
-engine = create_engine('sqlite:///:memory:', echo=True)
+engine = create_engine("sqlite:///:memory:", echo=True)
 Session = sessionmaker(bind=engine)
 
 
 def http_session() -> requests.Session:
     http = requests.Session()
-    http.headers['User-Agent'] = 'jamey@minilop.net'
+    http.headers["User-Agent"] = "jamey@minilop.net"
     return http
 
 
@@ -28,7 +28,8 @@ def crawl(url: Text) -> None:
         db.commit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
+
     for url in sys.argv[1:]:
         crawl(url)
