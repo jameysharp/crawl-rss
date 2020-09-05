@@ -1,6 +1,3 @@
-import cachecontrol
-from cachecontrol.caches import FileCache
-from cachecontrol.heuristics import LastModified
 from contextlib import closing
 from http.client import HTTPConnection
 import requests
@@ -20,14 +17,6 @@ Session = sessionmaker(bind=engine)
 def http_session() -> requests.Session:
     http = requests.Session()
     http.headers['User-Agent'] = b'jamey@minilop.net'
-
-    cache = cachecontrol.CacheControlAdapter(
-        cache=FileCache('.httpcache'),
-        heuristic=LastModified(),
-    )
-    http.mount('https://', cache)
-    http.mount('http://', cache)
-
     return http
 
 
