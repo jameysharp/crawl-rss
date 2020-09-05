@@ -9,14 +9,14 @@ from . import app
 from .feed_history.common import crawl_feed_history
 
 
-HTTPConnection.debuglevel = 1
+HTTPConnection.debuglevel = 1  # type: ignore
 engine = create_engine('sqlite:///:memory:', echo=True)
 Session = sessionmaker(bind=engine)
 
 
 def http_session() -> requests.Session:
     http = requests.Session()
-    http.headers['User-Agent'] = b'jamey@minilop.net'
+    http.headers['User-Agent'] = 'jamey@minilop.net'
     return http
 
 

@@ -52,7 +52,7 @@ class FeedArchivePage(app.Base):
     )
 
     def last_updated_entry(self) -> Optional['FeedPageEntry']:
-        return max(self.entries.values(), default=None, key=operator.attrgetter('updated'))
+        return max(self.entries.values(), default=None, key=operator.attrgetter('updated'))  # type: ignore
 
 
 class FeedPageEntry(app.Base):

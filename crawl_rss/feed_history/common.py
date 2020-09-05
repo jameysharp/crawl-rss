@@ -66,7 +66,7 @@ class FeedDocument(object):
                 updated=raw_entry.get('updated_parsed') and datetime.datetime(*raw_entry.updated_parsed[:6]),
             )
             if entry.guid and entry.published:
-                page.entries.set(entry)
+                page.entries.set(entry)  # type: ignore
         return page
 
 
@@ -78,12 +78,12 @@ class UpdateFeedHistory:
     def __call__(self, db: orm.Session, feed: models.Feed) -> None:
         # FIXME: try to reuse existing page and entry objects?
         # delete existing pages that have changed
-        del feed.archive_pages[self.keep_existing:]
+        del feed.archive_pages[self.keep_existing:]  # type: ignore
 
         db.flush()
 
         # append the new archive pages
-        feed.archive_pages.extend(self.new_pages)
+        feed.archive_pages.extend(self.new_pages)  # type: ignore
 
 
 def crawl_feed_history(db: orm.Session, http: requests.Session, url: Text) -> models.Feed:
