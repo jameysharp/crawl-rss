@@ -27,7 +27,6 @@ def from_rfc5005(
             break
 
         if prev_archive in seen:
-            #progress.warn("cycle in archive links at {}".format(prev_archive))
             break
 
         seen.add(prev_archive)

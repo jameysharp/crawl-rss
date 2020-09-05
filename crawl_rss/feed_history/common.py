@@ -87,19 +87,16 @@ class UpdateFeedHistory:
 
 
 def crawl_feed_history(db: orm.Session, http: requests.Session, url: Text) -> models.Feed:
-    #progress.info("checking {!r}".format(url))
     while True:
         base = FeedDocument(http, url)
 
         self = base.url
         if self and self != url:
-            #progress.info("document {!r} came from {!r}".format(url, self))
             url = self
 
         current = base.get_link('current')
         if current:
             if url != current:
-                #progress.info("document {!r} is not current, trying again from {!r}".format(url, current))
                 url = current
                 continue
         elif base.feed_type == FeedType.ARCHIVE:
