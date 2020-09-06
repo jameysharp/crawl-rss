@@ -1,5 +1,5 @@
 import httpx
-from pytest_httpx import HTTPXMock  # type: ignore
+from pytest_httpx import HTTPXMock
 from typing import Mapping
 
 from .common import FeedDocument
