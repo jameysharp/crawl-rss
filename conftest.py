@@ -1,3 +1,49 @@
+import pytest
+
+
+@pytest.fixture
+def mock_atom_feed(httpx_mock):
+    def make(
+        url,
+        *,
+        links={},
+        complete=False,
+        archive=False,
+        entries=[],
+    ):
+        data = [
+            '<feed xmlns="http://www.w3.org/2005/Atom">' "<id>urn:example:feed-id</id>"
+        ]
+
+        data.extend(
+            f"<link href={href!r} rel={rel!r}/>"
+            for rel, href in {"self": url, **links}.items()
+        )
+
+        if complete:
+            data.extend(
+                '<fh:complete xmlns:fh="http://purl.org/syndication/history/1.0"/>'
+            )
+        if archive:
+            data.extend(
+                '<fh:archive xmlns:fh="http://purl.org/syndication/history/1.0"/>'
+            )
+
+        data.extend(
+            "<entry>"
+            f"<id>urn:example:post-{entry}</id>"
+            f"<title>post #{entry}</title>"
+            f"<published>2020-01-{entry:02}T00:00:00Z</published>"
+            "</entry>"
+            for entry in entries
+        )
+
+        data.append("</feed>")
+        httpx_mock.add_response(url=url, data="".join(data))
+
+    return make
+
+
 def pytest_collection_modifyitems(items):
     "Don't type-check source files which only contain tests."
 
