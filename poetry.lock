@@ -435,6 +435,21 @@ pytest = ">=2.8.0"
 
 [[package]]
 category = "dev"
+description = "Send responses to httpx."
+name = "pytest-httpx"
+optional = false
+python-versions = ">=3.6"
+version = "0.8.0"
+
+[package.dependencies]
+httpx = ">=0.14.0,<0.15.0"
+pytest = ">=6.0.0,<7.0.0"
+
+[package.extras]
+testing = ["pytest-asyncio (>=0.14.0,<0.15.0)", "pytest-cov (>=2.0.0,<3.0.0)"]
+
+[[package]]
+category = "dev"
 description = "Mypy static type checker plugin for Pytest"
 name = "pytest-mypy"
 optional = false
@@ -571,7 +586,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "e1450669968f010a49e4d6e96740610ea6cc86c482e5145ac9f1510ac1c02853"
+content-hash = "2032c44aef92440f3b677cdf357904fa16584edb3d1c02e28b095c3b17e6fe2d"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -818,6 +833,10 @@ pytest-black = [
 pytest-flakes = [
     {file = "pytest-flakes-4.0.1.tar.gz", hash = "sha256:37113ac6c7ea5e0b648abf73937955a45f8b9214fe49413297c2ce6ce1808500"},
     {file = "pytest_flakes-4.0.1-py2.py3-none-any.whl", hash = "sha256:6f72544622a60271bae30364dedc8034d8f479ba49b98db7520afb00f4c88f1e"},
+]
+pytest-httpx = [
+    {file = "pytest_httpx-0.8.0-py3-none-any.whl", hash = "sha256:55f9d89bab9985721b5cc77d16b8bb24fd044d23d17635f0b2d892a017fd6b7d"},
+    {file = "pytest_httpx-0.8.0.tar.gz", hash = "sha256:61fd82885ce7655f1ee9b32ebced87af869f19d035956300f0016ec63057e747"},
 ]
 pytest-mypy = [
     {file = "pytest-mypy-0.7.0.tar.gz", hash = "sha256:5a667d9a2b66bf98b3a494411f221923a6e2c3eafbe771104951aaec8985673d"},
