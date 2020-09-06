@@ -1,10 +1,9 @@
 from typing import List, Optional, Set, Text
 
-from .common import crawler_registry, FeedDocument, FeedType, UpdateFeedHistory
+from .common import FeedDocument, FeedType, UpdateFeedHistory
 from .models import FeedArchivePage
 
 
-@crawler_registry
 def from_rfc5005(
     base: FeedDocument,
     old_pages: List[FeedArchivePage],

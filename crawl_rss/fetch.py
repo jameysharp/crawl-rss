@@ -6,6 +6,8 @@ from typing import Text
 
 from . import app
 from .feed_history.common import crawl_feed_history
+from .feed_history.rfc5005 import from_rfc5005
+from .feed_history.wordpress import from_wordpress
 
 
 engine = create_engine("sqlite:///:memory:", echo=True)
@@ -22,9 +24,10 @@ def http_session() -> httpx.Client:
 
 def crawl(url: Text) -> None:
     app.Base.metadata.create_all(engine)
+    crawlers = (from_rfc5005, from_wordpress)
 
     with http_session() as http, closing(Session()) as db:
-        crawl_feed_history(db, http, url)
+        crawl_feed_history(db, http, crawlers, url)
         db.commit()
 
 

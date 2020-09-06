@@ -4,11 +4,10 @@ import httpx
 from typing import Iterator, List, Optional, Text, Tuple
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
-from .common import crawler_registry, FeedDocument, UpdateFeedHistory
+from .common import FeedDocument, UpdateFeedHistory
 from .models import FeedArchivePage
 
 
-@crawler_registry
 def from_wordpress(
     base: FeedDocument,
     old_pages: List[FeedArchivePage],

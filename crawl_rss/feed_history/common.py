@@ -4,31 +4,10 @@ from enum import Enum
 import feedparser
 import httpx
 from sqlalchemy import orm
-from typing import Callable, Dict, List, Optional, Text, TypeVar, cast
+from typing import Callable, Dict, Iterable, List, Optional, Text, cast
 from urllib.parse import urljoin
 
 from . import models
-
-
-T = TypeVar("T")
-
-
-class Registry(List[T]):
-    """
-    A registry is a list which also acts as a decorator, so you can add items
-    to the list by decorating them.
-
-    >>> register = Registry()
-    >>> @register
-    ... def foo():
-    ...     print("foo")
-    >>> register[0]()
-    foo
-    """
-
-    def __call__(self, x: T) -> T:
-        self.append(x)
-        return x
 
 
 class FeedError(Exception):
@@ -112,7 +91,15 @@ class UpdateFeedHistory:
         feed.archive_pages.extend(self.new_pages)  # type: ignore
 
 
-def crawl_feed_history(db: orm.Session, http: httpx.Client, url: Text) -> models.Feed:
+Crawler = Callable[
+    [FeedDocument, List[models.FeedArchivePage]],
+    Optional[UpdateFeedHistory],
+]
+
+
+def crawl_feed_history(
+    db: orm.Session, http: httpx.Client, crawlers: Iterable[Crawler], url: Text
+) -> models.Feed:
     while True:
         base = FeedDocument(http, url)
 
@@ -143,7 +130,7 @@ def crawl_feed_history(db: orm.Session, http: httpx.Client, url: Text) -> models
     # XXX: be more selective?
     feed.properties = base.doc.feed
 
-    for crawler in crawler_registry:
+    for crawler in crawlers:
         apply_changes = crawler(
             base, cast(List[models.FeedArchivePage], feed.archive_pages)
         )
@@ -154,10 +141,3 @@ def crawl_feed_history(db: orm.Session, http: httpx.Client, url: Text) -> models
 
     apply_changes(db, feed)
     return feed
-
-
-Crawler = Callable[
-    [FeedDocument, List[models.FeedArchivePage]],
-    Optional[UpdateFeedHistory],
-]
-crawler_registry: Registry[Crawler] = Registry()
