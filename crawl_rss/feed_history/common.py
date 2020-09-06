@@ -2,9 +2,9 @@ from dataclasses import dataclass
 import datetime
 from enum import Enum
 import feedparser
-import requests
+import httpx
 from sqlalchemy import orm
-from typing import Callable, List, Mapping, Optional, Text, TypeVar, cast
+from typing import Callable, Dict, List, Optional, Text, TypeVar, cast
 from urllib.parse import urljoin
 
 from . import models
@@ -42,16 +42,17 @@ class FeedType(Enum):
 
 
 class FeedDocument(object):
-    def __init__(
-        self, http: requests.Session, url: Text, headers: Mapping[Text, Text] = {}
-    ):
+    def __init__(self, http: httpx.Client, url: Text, headers: Dict[Text, Text] = {}):
         self.http = http
-        with http.get(url, stream=True, headers=headers) as response:
-            response.raise_for_status()
-            response.headers.setdefault("Content-Location", response.url)
-            self.doc: feedparser.FeedParserDict = feedparser.parse(
-                response.raw, response_headers=response.headers
-            )
+        response = http.get(url, headers=headers)
+        response.raise_for_status()
+
+        if "content-location" not in response.headers and response.url:
+            response.headers["content-location"] = str(response.url)
+
+        self.doc: feedparser.FeedParserDict = feedparser.parse(
+            response.content, response_headers=response.headers
+        )
 
     @property
     def url(self) -> Text:
@@ -89,7 +90,7 @@ class FeedDocument(object):
                 page.entries.set(entry)  # type: ignore
         return page
 
-    def follow(self, url: Text, headers: Mapping[Text, Text] = {}) -> "FeedDocument":
+    def follow(self, url: Text, headers: Dict[Text, Text] = {}) -> "FeedDocument":
         base_url = self.url
         headers = {"Referer": base_url, **headers}
         return FeedDocument(self.http, urljoin(base_url, url), headers)
@@ -111,9 +112,7 @@ class UpdateFeedHistory:
         feed.archive_pages.extend(self.new_pages)  # type: ignore
 
 
-def crawl_feed_history(
-    db: orm.Session, http: requests.Session, url: Text
-) -> models.Feed:
+def crawl_feed_history(db: orm.Session, http: httpx.Client, url: Text) -> models.Feed:
     while True:
         base = FeedDocument(http, url)
 

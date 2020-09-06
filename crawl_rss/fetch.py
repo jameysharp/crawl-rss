@@ -1,6 +1,5 @@
 from contextlib import closing
-from http.client import HTTPConnection
-import requests
+import httpx
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from typing import Text
@@ -9,15 +8,16 @@ from . import app
 from .feed_history.common import crawl_feed_history
 
 
-HTTPConnection.debuglevel = 1  # type: ignore
 engine = create_engine("sqlite:///:memory:", echo=True)
 Session = sessionmaker(bind=engine)
 
 
-def http_session() -> requests.Session:
-    http = requests.Session()
-    http.headers["User-Agent"] = "jamey@minilop.net"
-    return http
+def http_session() -> httpx.Client:
+    return httpx.Client(
+        headers={
+            "User-Agent": "jamey@minilop.net",
+        }
+    )
 
 
 def crawl(url: Text) -> None:

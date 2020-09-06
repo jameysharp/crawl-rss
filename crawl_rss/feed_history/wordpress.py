@@ -1,6 +1,6 @@
 import itertools
 import operator
-import requests
+import httpx
 from typing import Iterator, List, Optional, Text, Tuple
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
@@ -62,7 +62,7 @@ def from_wordpress(
     try:
         for page_url in urls:
             new_pages.append(base.follow(page_url).as_archive_page())
-    except requests.HTTPError as e:
+    except httpx.HTTPStatusError as e:
         # 404 terminates the loop but isn't fatal
         if e.response.status_code != 404:
             raise
@@ -74,9 +74,8 @@ def from_wordpress(
 
 
 def is_wordpress_generated(feed: FeedDocument) -> bool:
-    for link in requests.utils.parse_header_links(feed.doc.headers.get("Link", "")):
-        if link.get("rel") == "https://api.w.org/":
-            return True
+    if 'rel="https://api.w.org/"' in feed.doc.headers.get("Link", ""):
+        return True
 
     generator = feed.doc.get("generator_detail") or {}
     for ident in generator.values():
@@ -113,7 +112,7 @@ def refresh_wordpress_pages(
         try:
             new_page = base.follow(old_page.url).as_archive_page()
             found_later = True
-        except requests.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             # 404 is okay because it just means the history got shorter, unless
             # we've already found later pages, in which case even 404 is bad
             if found_later or e.response.status_code != 404:
