@@ -5,6 +5,7 @@ import feedparser
 import requests
 from sqlalchemy import orm
 from typing import Callable, List, Mapping, Optional, Text, TypeVar, cast
+from urllib.parse import urljoin
 
 from . import models
 
@@ -44,6 +45,7 @@ class FeedDocument(object):
     def __init__(
         self, http: requests.Session, url: Text, headers: Mapping[Text, Text] = {}
     ):
+        self.http = http
         with http.get(url, stream=True, headers=headers) as response:
             response.raise_for_status()
             response.headers.setdefault("Content-Location", response.url)
@@ -86,6 +88,11 @@ class FeedDocument(object):
             if entry.guid and entry.published:
                 page.entries.set(entry)  # type: ignore
         return page
+
+    def follow(self, url: Text, headers: Mapping[Text, Text] = {}) -> "FeedDocument":
+        base_url = self.url
+        headers = {"Referer": base_url, **headers}
+        return FeedDocument(self.http, urljoin(base_url, url), headers)
 
 
 @dataclass(frozen=True)
@@ -139,7 +146,7 @@ def crawl_feed_history(
 
     for crawler in crawler_registry:
         apply_changes = crawler(
-            http, base, cast(List[models.FeedArchivePage], feed.archive_pages)
+            base, cast(List[models.FeedArchivePage], feed.archive_pages)
         )
         if apply_changes is not None:
             break
@@ -151,7 +158,7 @@ def crawl_feed_history(
 
 
 Crawler = Callable[
-    [requests.Session, FeedDocument, List[models.FeedArchivePage]],
+    [FeedDocument, List[models.FeedArchivePage]],
     Optional[UpdateFeedHistory],
 ]
 crawler_registry: Registry[Crawler] = Registry()

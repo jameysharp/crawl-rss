@@ -1,4 +1,3 @@
-import requests
 from typing import List, Optional, Set, Text
 
 from .common import crawler_registry, FeedDocument, FeedType, UpdateFeedHistory
@@ -7,7 +6,6 @@ from .models import FeedArchivePage
 
 @crawler_registry
 def from_rfc5005(
-    http: requests.Session,
     base: FeedDocument,
     old_pages: List[FeedArchivePage],
 ) -> Optional[UpdateFeedHistory]:
@@ -35,8 +33,7 @@ def from_rfc5005(
         if keep_existing:
             break
 
-        page = FeedDocument(
-            http,
+        page = page.follow(
             prev_archive,
             headers={
                 # archive documents should always be taken from the cache
