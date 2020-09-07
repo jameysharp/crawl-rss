@@ -7,6 +7,7 @@ def mock_atom_feed(httpx_mock):
     def make(
         url,
         *,
+        headers={},
         links={},
         complete=False,
         archive=False,
@@ -40,7 +41,7 @@ def mock_atom_feed(httpx_mock):
         )
 
         data.append("</feed>")
-        httpx_mock.add_response(url=url, data="".join(data))
+        httpx_mock.add_response(url=url, headers=headers, data="".join(data))
 
     return make
 
