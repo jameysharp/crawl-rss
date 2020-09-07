@@ -2,3 +2,5 @@ __pycache__/
 dist/
 .mypy_cache/
 *.egg-info/
+.coverage
+htmlcov/
