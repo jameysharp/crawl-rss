@@ -37,7 +37,6 @@ def from_rfc5005(
             headers={
                 # archive documents should always be taken from the cache
                 "Cache-Control": "max-stale",
-                "Referer": page.url,
             },
         )
         new_pages.append(page.as_archive_page())
