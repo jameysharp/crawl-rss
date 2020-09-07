@@ -1,4 +1,5 @@
 import pytest
+from xml.sax.saxutils import quoteattr
 
 
 @pytest.fixture
@@ -16,7 +17,7 @@ def mock_atom_feed(httpx_mock):
         ]
 
         data.extend(
-            f"<link href={href!r} rel={rel!r}/>"
+            f"<link href={quoteattr(href)} rel={quoteattr(rel)}/>"
             for rel, href in {"self": url, **links}.items()
         )
 
