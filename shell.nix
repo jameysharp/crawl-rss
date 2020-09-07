@@ -6,9 +6,6 @@ mkShell {
   buildInputs = [
     (python3.withPackages (ps: [ ps.ipython ]))
     poetry
-
-    libxml2
-    libxslt
   ];
 
   # settings to make various things work in virtualenv:

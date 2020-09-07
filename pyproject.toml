@@ -8,8 +8,6 @@ authors = ["Jamey Sharp <jamey@minilop.net>"]
 python = "^3.7"
 sqlalchemy = "^1.3"
 feedparser = "^5.2"
-html5lib = "^1.0"
-lxml = "^4.5"
 httpx = {extras = ["http2", "brotli"], version = "^0.14.3"}
 
 [tool.poetry.dev-dependencies]
@@ -19,7 +17,6 @@ pytest-cov = "^2.10.1"
 pytest-flakes = "^4.0.1"
 pytest-httpx = "^0.8.0"
 pytest-mypy = "^0.7.0"
-lxml-stubs = "^0.1.1"
 sqlalchemy-stubs = "^0.3.0"
 black = {version = "^20.8b1", allow-prereleases = true}
 coverage = {extras = ["toml"], version = "^5.2.1"}
