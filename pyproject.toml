@@ -22,7 +22,7 @@ black = {version = "^20.8b1", allow-prereleases = true}
 coverage = {extras = ["toml"], version = "^5.2.1"}
 
 [tool.pytest.ini_options]
-addopts = "--black --flakes --mypy --doctest-modules --cov-report html"
+addopts = "--mypy --doctest-modules --cov-report html"
 testpaths = "crawl_rss"
 
 [tool.coverage.run]
