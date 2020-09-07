@@ -36,6 +36,7 @@ def mock_atom_feed(httpx_mock):
             f"<id>urn:example:post-{entry}</id>"
             f"<title>post #{entry}</title>"
             f"<published>2020-01-{entry:02}T00:00:00Z</published>"
+            f"<updated>2020-01-{entry:02}T00:00:00Z</updated>"
             "</entry>"
             for entry in entries
         )
