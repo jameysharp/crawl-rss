@@ -29,4 +29,4 @@ jobs:
         poetry install
     - name: Test with pytest
       run: |
-        pytest --black --flakes
+        poetry run pytest --black --flakes
