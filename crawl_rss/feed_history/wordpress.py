@@ -76,7 +76,7 @@ def is_wordpress_generated(feed: FeedDocument) -> bool:
     if 'rel="https://api.w.org/"' in feed.doc.headers.get("Link", ""):
         return True
 
-    generator = feed.doc.get("generator_detail") or {}
+    generator = feed.doc.feed.get("generator_detail") or {}
     for ident in generator.values():
         ident = ident.lower()
         if "wordpress.com" in ident or "wordpress.org" in ident:
