@@ -2,7 +2,9 @@
 name = "crawl-rss"
 version = "0.1.0"
 description = ""
+license = "AGPL-3.0-only"
 authors = ["Jamey Sharp <jamey@minilop.net>"]
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.7"
