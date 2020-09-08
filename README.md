@@ -25,7 +25,19 @@ poetry install
 ```
 
 That'll get you all the runtime and development dependencies for this
-project.
+project, installed into an isolated Python environment.
 
-After that you can run the tests with `pytest`. This project doesn't
-have a good demo yet otherwise.
+You can use `poetry run <command>` to run a command in that environment,
+such as `poetry run pytest --cov` (to run the test suite and check test
+coverage). Or you can run `poetry shell` which drops you into a shell
+prompt that has access to the right Python environment.
+
+Now you can run the web server for this project. This command enables
+logging for any requests the app sends to remote web servers; you can
+leave off setting [`HTTPX_LOG_LEVEL`][httpx-log] if you don't want that.
+
+```sh
+HTTPX_LOG_LEVEL=debug uvicorn --reload crawl_rss.server:app
+```
+
+[httpx-log]: https://www.python-httpx.org/environment_variables/#httpx_log_level

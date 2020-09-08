@@ -10,7 +10,7 @@ from .feed_history.rfc5005 import from_rfc5005
 from .feed_history.wordpress import from_wordpress
 
 
-engine = create_engine("sqlite:///:memory:", echo=True)
+engine = create_engine("sqlite:///db.sqlite", echo=True)
 Session = sessionmaker(bind=engine)
 
 
@@ -22,13 +22,15 @@ def http_session() -> httpx.Client:
     )
 
 
-def crawl(url: Text) -> None:
+def crawl(url: Text) -> int:
     app.Base.metadata.create_all(engine)
     crawlers = (from_rfc5005, from_wordpress)
 
     with http_session() as http, closing(Session()) as db:
-        crawl_feed_history(db, http, crawlers, url)
+        feed_id = crawl_feed_history(db, http, crawlers, url).id
         db.commit()
+
+    return feed_id
 
 
 if __name__ == "__main__":
