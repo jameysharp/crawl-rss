@@ -2,6 +2,7 @@ import httpx
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import select
 
 from .. import app
 from . import models
@@ -41,10 +42,10 @@ class MockCrawler:
         assert base.url == self.url
         return self.update
 
-    def update(self, db, feed):
+    def update(self, db, feed_id):
         self.update_count += 1
         self.db = db
-        self.feed = feed
+        self.feed_id = feed_id
 
 
 def test_new_mock_crawler(db, mock_atom_feed):
@@ -63,8 +64,11 @@ def test_updated_mock_crawler(db, mock_atom_feed):
     mock_atom_feed("https://crawl.example/feed")
     crawler = MockCrawler("https://crawl.example/feed")
 
-    feed = models.Feed(url="https://crawl.example/feed", properties={})
-    db.add(feed)
+    result = db.execute(
+        models.Feed.__table__.insert(),
+        {"url": "https://crawl.example/feed", "properties": {}},
+    )
+    feed_id = result.inserted_primary_key[0]
 
     with httpx.Client() as http:
         crawl_feed_history(db, http, [crawler.crawl], "https://crawl.example/feed")
@@ -72,18 +76,33 @@ def test_updated_mock_crawler(db, mock_atom_feed):
     assert crawler.crawl_count == 1
     assert crawler.update_count == 1
     assert crawler.db is db
-    assert crawler.feed is feed
+    assert crawler.feed_id is feed_id
 
 
 def test_update_feed_history(db):
-    pages = [
-        models.FeedArchivePage(url=f"https://crawl.example/feed-{idx}")
-        for idx in range(3)
-    ]
-    feed = models.Feed(
-        url="https://crawl.example/feed", properties={}, archive_pages=pages[:2]
+    page_urls = [f"https://crawl.example/feed-{idx}" for idx in range(3)]
+
+    result = db.execute(
+        models.Feed.__table__.insert(),
+        {"url": "https://crawl.example/feed", "properties": {}},
     )
-    update = UpdateFeedHistory(1, pages[2:])
-    update(db, feed)
-    assert feed.archive_pages[0] is pages[0]
-    assert feed.archive_pages[1] is pages[2]
+    feed_id = result.inserted_primary_key[0]
+
+    page = models.FeedArchivePage.__table__
+    db.execute(
+        page.insert(),
+        [
+            {"feed_id": feed_id, "order": order, "url": url}
+            for order, url in enumerate(page_urls[:2])
+        ],
+    )
+
+    update = UpdateFeedHistory(
+        1, [models.FeedArchivePage(url=url) for url in page_urls[2:]]
+    )
+    update(db, feed_id)
+
+    urls = db.execute(
+        select([page.c.url]).where(page.c.feed_id == feed_id).order_by(page.c.order)
+    )
+    assert list(urls) == [(page_urls[0],), (page_urls[2],)]

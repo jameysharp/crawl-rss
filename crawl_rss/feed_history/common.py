@@ -4,7 +4,8 @@ from enum import Enum
 import feedparser
 import httpx
 from sqlalchemy import orm
-from typing import Callable, Dict, Iterable, List, Optional, Text, cast
+from sqlalchemy.sql import select
+from typing import Any, Callable, Dict, Iterable, List, Optional, Text, cast
 from urllib.parse import urljoin
 
 from . import models
@@ -80,15 +81,42 @@ class UpdateFeedHistory:
     keep_existing: int
     new_pages: List[models.FeedArchivePage]
 
-    def __call__(self, db: orm.Session, feed: models.Feed) -> None:
+    def __call__(self, db: orm.Session, feed_id: int) -> None:
         # FIXME: try to reuse existing page and entry objects?
         # delete existing pages that have changed
-        del feed.archive_pages[self.keep_existing :]  # type: ignore
-
-        db.flush()
+        pages = models.FeedArchivePage.__table__
+        db.execute(
+            pages.delete()
+            .where(pages.c.feed_id == feed_id)
+            .where(pages.c.order >= self.keep_existing)
+        )
 
         # append the new archive pages
-        feed.archive_pages.extend(self.new_pages)  # type: ignore
+        new_entries: List[Dict[str, Any]] = []
+        add_page = pages.insert()
+        for order, page in enumerate(self.new_pages, self.keep_existing):
+            result = db.execute(
+                add_page, {"feed_id": feed_id, "order": order, "url": page.url}
+            )
+            page_id = result.inserted_primary_key[0]
+            assert page_id is not None
+
+            page_entries = page.entries.values()  # type: ignore
+            new_entries.extend(
+                {
+                    "archive_page_id": page_id,
+                    "guid": entry.guid,
+                    "title": entry.title,
+                    "link": entry.link,
+                    "published": entry.published,
+                    "updated": entry.updated,
+                }
+                for entry in page_entries
+            )
+
+        # attach all the entries for each of the new pages
+        if new_entries:
+            db.execute(models.FeedPageEntry.__table__.insert(), new_entries)
 
 
 Crawler = Callable[
@@ -99,7 +127,7 @@ Crawler = Callable[
 
 def crawl_feed_history(
     db: orm.Session, http: httpx.Client, crawlers: Iterable[Crawler], url: Text
-) -> models.Feed:
+) -> int:
     while True:
         base = FeedDocument(http, url)
 
@@ -122,22 +150,38 @@ def crawl_feed_history(
         # found the right subscription document
         break
 
-    feed = db.query(models.Feed).with_for_update().filter_by(url=url).one_or_none()
-    if feed is None:
-        feed = models.Feed(url=url)
-        db.add(feed)
-
     # XXX: be more selective?
-    feed.properties = base.doc.feed
+    properties = base.doc.feed
+
+    feed_table = models.Feed.__table__
+    feed = db.execute(
+        select([feed_table]).with_for_update().where(feed_table.c.url == url)
+    ).first()
+
+    if feed is None:
+        result = db.execute(feed_table.insert().values(url=url, properties=properties))
+        feed_id = result.inserted_primary_key[0]
+    else:
+        feed_id = feed[feed_table.c.id]
+        if feed[feed_table.c.properties] != properties:
+            db.execute(
+                feed_table.update()
+                .where(feed_table.c.id == feed_id)
+                .values(properties=properties)
+            )
+
+    archive_pages = (
+        db.query(models.FeedArchivePage)
+        .filter_by(feed_id=feed_id)
+        .order_by(models.FeedArchivePage.order)
+    )
 
     for crawler in crawlers:
-        apply_changes = crawler(
-            base, cast(List[models.FeedArchivePage], feed.archive_pages)
-        )
+        apply_changes = crawler(base, archive_pages)
         if apply_changes is not None:
             break
     else:
         raise FeedError("no history found for feed {!r}".format(url))
 
-    apply_changes(db, feed)
-    return feed
+    apply_changes(db, feed_id)
+    return feed_id

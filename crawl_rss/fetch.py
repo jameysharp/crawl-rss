@@ -27,7 +27,7 @@ def crawl(url: Text) -> int:
     crawlers = (from_rfc5005, from_wordpress)
 
     with http_session() as http, closing(Session()) as db:
-        feed_id = crawl_feed_history(db, http, crawlers, url).id
+        feed_id = crawl_feed_history(db, http, crawlers, url)
         db.commit()
 
     return feed_id
