@@ -1,11 +1,10 @@
-from contextlib import closing
 from sqlalchemy.sql import select
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse, RedirectResponse
 from starlette.requests import Request
 from starlette.routing import Route
 
-from .fetch import crawl, Session
+from .fetch import crawl, engine
 from .feed_history.models import FeedArchivePage, FeedPageEntry
 
 
@@ -15,10 +14,10 @@ def crawl_feed(request: Request) -> RedirectResponse:
 
 
 def list_posts(request: Request) -> JSONResponse:
-    with closing(Session()) as db:
+    with engine.begin() as connection:
         page = FeedArchivePage.__table__
         entry = FeedPageEntry.__table__
-        posts = db.execute(
+        posts = connection.execute(
             select([entry])
             .select_from(entry.join(page))
             .where(page.c.feed_id == request.path_params["feed_id"])

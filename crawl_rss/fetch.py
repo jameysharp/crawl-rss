@@ -1,7 +1,5 @@
-from contextlib import closing
 import httpx
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from typing import Text
 
 from . import app
@@ -11,7 +9,6 @@ from .feed_history.wordpress import from_wordpress
 
 
 engine = create_engine("sqlite:///db.sqlite", echo=True)
-Session = sessionmaker(bind=engine)
 
 
 def http_session() -> httpx.Client:
@@ -26,11 +23,8 @@ def crawl(url: Text) -> int:
     app.Base.metadata.create_all(engine)
     crawlers = (from_rfc5005, from_wordpress)
 
-    with http_session() as http, closing(Session()) as db:
-        feed_id = crawl_feed_history(db, http, crawlers, url)
-        db.commit()
-
-    return feed_id
+    with http_session() as http, engine.begin() as connection:
+        return crawl_feed_history(connection, http, crawlers, url)
 
 
 if __name__ == "__main__":
