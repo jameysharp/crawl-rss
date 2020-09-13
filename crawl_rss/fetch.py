@@ -1,5 +1,5 @@
 import httpx
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from typing import Text
 
 from . import app
@@ -9,6 +9,12 @@ from .feed_history.wordpress import from_wordpress
 
 
 engine = create_engine("sqlite:///db.sqlite", echo=True)
+
+if engine.name == "sqlite":
+
+    @event.listens_for(engine, "engine_connect")
+    def enable_sqlite_foreign_keys(connection, branch):  # type: ignore
+        connection.execute("PRAGMA foreign_keys = ON")
 
 
 def http_session() -> httpx.Client:
