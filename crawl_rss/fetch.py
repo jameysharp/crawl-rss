@@ -20,7 +20,7 @@ def http_session() -> httpx.Client:
 
 
 def crawl(url: Text) -> int:
-    app.Base.metadata.create_all(engine)
+    app.metadata.create_all(engine)
     crawlers = (from_rfc5005, from_wordpress)
 
     with http_session() as http, engine.begin() as connection:

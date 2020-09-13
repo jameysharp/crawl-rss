@@ -104,7 +104,7 @@ class UpdateFeedHistory:
     def __call__(self, connection: Connection, feed_id: int) -> None:
         # FIXME: try to reuse existing page and entry objects?
         # delete existing pages that have changed
-        pages = models.FeedArchivePage.__table__
+        pages = models.feed_archive_pages
         connection.execute(
             pages.delete()
             .where(pages.c.feed_id == feed_id)
@@ -136,7 +136,7 @@ class UpdateFeedHistory:
 
         # attach all the entries for each of the new pages
         if new_entries:
-            connection.execute(models.FeedPageEntry.__table__.insert(), new_entries)
+            connection.execute(models.feed_page_entries.insert(), new_entries)
 
 
 Crawler = Callable[
@@ -173,7 +173,7 @@ def crawl_feed_history(
     # XXX: be more selective?
     properties = base.doc.feed
 
-    feed_table = models.Feed.__table__
+    feed_table = models.feeds
     feed = connection.execute(
         select([feed_table]).with_for_update().where(feed_table.c.url == url)
     ).first()
@@ -193,8 +193,8 @@ def crawl_feed_history(
                 .values(properties=properties)
             )
 
-        page_table = models.FeedArchivePage.__table__
-        entry_table = models.FeedPageEntry.__table__
+        page_table = models.feed_archive_pages
+        entry_table = models.feed_page_entries
         where = page_table.c.feed_id == feed_id
         entries: Dict[int, Dict[str, FeedEntry]] = defaultdict(dict)
         for entry in connection.execute(

@@ -5,7 +5,7 @@ from starlette.requests import Request
 from starlette.routing import Route
 
 from .fetch import crawl, engine
-from .feed_history.models import FeedArchivePage, FeedPageEntry
+from .feed_history import models
 
 
 def crawl_feed(request: Request) -> RedirectResponse:
@@ -15,8 +15,8 @@ def crawl_feed(request: Request) -> RedirectResponse:
 
 def list_posts(request: Request) -> JSONResponse:
     with engine.begin() as connection:
-        page = FeedArchivePage.__table__
-        entry = FeedPageEntry.__table__
+        page = models.feed_archive_pages
+        entry = models.feed_page_entries
         posts = connection.execute(
             select([entry])
             .select_from(entry.join(page))

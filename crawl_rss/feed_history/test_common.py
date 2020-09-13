@@ -11,7 +11,7 @@ from .common import FeedError, FeedPage, UpdateFeedHistory, crawl_feed_history
 @pytest.fixture
 def connection():
     engine = create_engine("sqlite:///")
-    app.Base.metadata.create_all(engine)
+    app.metadata.create_all(engine)
     connection = engine.connect()
     tx = connection.begin()
     yield connection
@@ -66,7 +66,7 @@ def test_updated_mock_crawler(connection, mock_atom_feed):
     crawler = MockCrawler("https://crawl.example/feed")
 
     result = connection.execute(
-        models.Feed.__table__.insert(),
+        models.feeds.insert(),
         {"url": "https://crawl.example/feed", "properties": {}},
     )
     feed_id = result.inserted_primary_key[0]
@@ -86,12 +86,12 @@ def test_update_feed_history(connection):
     page_urls = [f"https://crawl.example/feed-{idx}" for idx in range(3)]
 
     result = connection.execute(
-        models.Feed.__table__.insert(),
+        models.feeds.insert(),
         {"url": "https://crawl.example/feed", "properties": {}},
     )
     feed_id = result.inserted_primary_key[0]
 
-    page = models.FeedArchivePage.__table__
+    page = models.feed_archive_pages
     connection.execute(
         page.insert(),
         [
