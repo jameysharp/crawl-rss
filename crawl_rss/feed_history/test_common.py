@@ -6,7 +6,7 @@ from sqlalchemy.sql import select
 
 from .. import app
 from . import models
-from .common import FeedError, UpdateFeedHistory, crawl_feed_history
+from .common import FeedError, FeedPage, UpdateFeedHistory, crawl_feed_history
 
 
 @pytest.fixture
@@ -97,9 +97,7 @@ def test_update_feed_history(db):
         ],
     )
 
-    update = UpdateFeedHistory(
-        1, [models.FeedArchivePage(url=url) for url in page_urls[2:]]
-    )
+    update = UpdateFeedHistory(1, [FeedPage(url=url) for url in page_urls[2:]])
     update(db, feed_id)
 
     urls = db.execute(

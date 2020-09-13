@@ -1,18 +1,17 @@
 from typing import List, Optional, Set, Text
 
-from .common import FeedDocument, FeedType, UpdateFeedHistory
-from .models import FeedArchivePage
+from .common import FeedDocument, FeedPage, FeedType, UpdateFeedHistory
 
 
 def from_rfc5005(
     base: FeedDocument,
-    old_pages: List[FeedArchivePage],
+    old_pages: List[FeedPage],
 ) -> Optional[UpdateFeedHistory]:
     if base.feed_type == FeedType.COMPLETE:
-        # feed gets one FeedArchivePage containing all of base's FeedPageEntries
-        return UpdateFeedHistory(0, [base.as_archive_page()])
+        # feed gets one FeedPage containing all of base's FeedPageEntries
+        return UpdateFeedHistory(0, [base.as_page()])
 
-    # walk backwards until we hit an existing FeedArchivePage
+    # walk backwards until we hit an existing FeedPage
     existing_pages = {page.url: keep for keep, page in enumerate(old_pages, 1)}
     seen: Set[Text] = set()
     keep_existing = 0
@@ -39,13 +38,13 @@ def from_rfc5005(
                 "Cache-Control": "max-stale",
             },
         )
-        new_pages.append(page.as_archive_page())
+        new_pages.append(page.as_page())
 
     if not keep_existing and not new_pages:
         return None
 
     # found some RFC5005 archives
     new_pages.reverse()
-    # base is the newest FeedArchivePage
-    new_pages.append(base.as_archive_page())
+    # base is the newest FeedPage
+    new_pages.append(base.as_page())
     return UpdateFeedHistory(keep_existing, new_pages)

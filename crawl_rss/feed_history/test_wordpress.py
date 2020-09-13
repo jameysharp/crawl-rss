@@ -2,8 +2,7 @@ import datetime
 import httpx
 import pytest
 
-from .common import FeedDocument
-from .models import FeedArchivePage, FeedPageEntry
+from .common import FeedDocument, FeedEntry, FeedPage
 from .wordpress import from_wordpress
 
 
@@ -35,9 +34,8 @@ def expected_page(entries):
     for entry in entries:
         guid = f"urn:example:post-{entry}"
         pubdate = datetime.datetime(2020, 1, entry, 0, 0)
-        result[guid] = FeedPageEntry(
+        result[guid] = FeedEntry(
             guid=guid,
-            title=f"post #{entry}",
             link=guid,
             published=pubdate,
             updated=pubdate,
@@ -103,7 +101,7 @@ def test_new_page(mock_wp_feed):
     with httpx.Client() as http:
         update = from_wordpress(
             FeedDocument(http, "https://wp.example/feed/"),
-            [FeedArchivePage(url=url_for(1), entries=expected_page([1]))],
+            [FeedPage(url=url_for(1), entries=expected_page([1]))],
         )
 
     assert update is not None
@@ -122,8 +120,8 @@ def test_dropped_page(mock_wp_feed):
         update = from_wordpress(
             FeedDocument(http, "https://wp.example/feed/"),
             [
-                FeedArchivePage(url=url_for(1), entries=expected_page([1])),
-                FeedArchivePage(url=url_for(2), entries=expected_page([2])),
+                FeedPage(url=url_for(1), entries=expected_page([1])),
+                FeedPage(url=url_for(2), entries=expected_page([2])),
             ],
         )
 
@@ -139,8 +137,8 @@ def test_changed_page(mock_wp_feed):
         update = from_wordpress(
             FeedDocument(http, "https://wp.example/feed/"),
             [
-                FeedArchivePage(url=url_for(1), entries=expected_page([1])),
-                FeedArchivePage(url=url_for(2), entries=expected_page([2])),
+                FeedPage(url=url_for(1), entries=expected_page([1])),
+                FeedPage(url=url_for(2), entries=expected_page([2])),
             ],
         )
 
@@ -160,12 +158,8 @@ def test_changed_links(mock_wp_feed):
         update = from_wordpress(
             FeedDocument(http, "https://wp.example/feed/"),
             [
-                FeedArchivePage(
-                    url="https://wp.example/1/", entries=expected_page([1])
-                ),
-                FeedArchivePage(
-                    url="https://wp.example/2/", entries=expected_page([2])
-                ),
+                FeedPage(url="https://wp.example/1/", entries=expected_page([1])),
+                FeedPage(url="https://wp.example/2/", entries=expected_page([2])),
             ],
         )
 

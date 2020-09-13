@@ -1,4 +1,3 @@
-import operator
 from sqlalchemy import (
     Column,
     Integer,
@@ -12,7 +11,6 @@ from sqlalchemy import (
 from sqlalchemy import orm
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.ext.orderinglist import ordering_list
-from typing import Optional
 
 from .. import app
 
@@ -59,9 +57,6 @@ class FeedArchivePage(app.Base):
         UniqueConstraint(feed_id, order),
         UniqueConstraint(url, feed_id),
     )
-
-    def last_updated_entry(self) -> Optional["FeedPageEntry"]:
-        return max(self.entries.values(), default=None, key=operator.attrgetter("updated"))  # type: ignore
 
 
 class FeedPageEntry(app.Base):

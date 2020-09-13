@@ -4,19 +4,18 @@ import httpx
 from typing import Iterator, List, Optional, Text, Tuple
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
-from .common import FeedDocument, UpdateFeedHistory
-from .models import FeedArchivePage
+from .common import FeedDocument, FeedPage, UpdateFeedHistory
 
 
 def from_wordpress(
     base: FeedDocument,
-    old_pages: List[FeedArchivePage],
+    old_pages: List[FeedPage],
 ) -> Optional[UpdateFeedHistory]:
     if not is_wordpress_generated(base):
         return None
 
     # try synthesizing from WordPress query args; base is not used as a
-    # FeedArchivePage in this case. refetch the oldest page to validate that
+    # FeedPage in this case. refetch the oldest page to validate that
     # WordPress-style pagination will work
     base = base.follow(
         query_string_replace(
@@ -60,7 +59,7 @@ def from_wordpress(
     # then walk forwards from the page after the newest one we have, or page 1 if we didn't have any
     try:
         for page_url in urls:
-            new_pages.append(base.follow(page_url).as_archive_page())
+            new_pages.append(base.follow(page_url).as_page())
     except httpx.HTTPStatusError as e:
         # 404 terminates the loop but isn't fatal
         if e.response.status_code != 404:
@@ -100,8 +99,8 @@ def query_string_replace(url: Text, **kwargs: Text) -> Text:
 
 def refresh_wordpress_pages(
     base: FeedDocument,
-    old_pages: List[FeedArchivePage],
-) -> Iterator[Tuple[FeedArchivePage, Optional[FeedArchivePage]]]:
+    old_pages: List[FeedPage],
+) -> Iterator[Tuple[FeedPage, Optional[FeedPage]]]:
     if not old_pages:
         return
 
@@ -109,7 +108,7 @@ def refresh_wordpress_pages(
     for old_page in reversed(old_pages[1:]):
         new_page = None
         try:
-            new_page = base.follow(old_page.url).as_archive_page()
+            new_page = base.follow(old_page.url).as_page()
             found_later = True
         except httpx.HTTPStatusError as e:
             # 404 is okay because it just means the history got shorter, unless
@@ -118,4 +117,4 @@ def refresh_wordpress_pages(
                 raise
         yield old_page, new_page
 
-    yield old_pages[0], base.as_archive_page()
+    yield old_pages[0], base.as_page()

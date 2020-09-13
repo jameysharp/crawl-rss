@@ -1,7 +1,6 @@
 import httpx
 
-from .common import FeedDocument
-from .models import FeedArchivePage
+from .common import FeedDocument, FeedPage
 from .rfc5005 import from_rfc5005
 
 
@@ -36,7 +35,7 @@ def test_updated_complete_feed(mock_atom_feed):
     with httpx.Client() as http:
         update = from_rfc5005(
             FeedDocument(http, "https://rfc5005.example/feed.xml"),
-            [FeedArchivePage(url="https://rfc5005.example/feed.xml")],
+            [FeedPage(url="https://rfc5005.example/feed.xml")],
         )
 
     assert update is not None
@@ -123,8 +122,8 @@ def test_extended_archived_feed(mock_atom_feed):
         update = from_rfc5005(
             FeedDocument(http, "https://rfc5005.example/feed.xml"),
             [
-                FeedArchivePage(url="https://rfc5005.example/feed-1.xml"),
-                FeedArchivePage(url="https://rfc5005.example/feed.xml"),
+                FeedPage(url="https://rfc5005.example/feed-1.xml"),
+                FeedPage(url="https://rfc5005.example/feed.xml"),
             ],
         )
 
@@ -175,9 +174,9 @@ def test_revised_archived_feed(mock_atom_feed):
         update = from_rfc5005(
             FeedDocument(http, "https://rfc5005.example/feed.xml"),
             [
-                FeedArchivePage(url="https://rfc5005.example/feed-1.xml"),
-                FeedArchivePage(url="https://rfc5005.example/feed-2.xml"),
-                FeedArchivePage(url="https://rfc5005.example/feed.xml"),
+                FeedPage(url="https://rfc5005.example/feed-1.xml"),
+                FeedPage(url="https://rfc5005.example/feed-2.xml"),
+                FeedPage(url="https://rfc5005.example/feed.xml"),
             ],
         )
 
