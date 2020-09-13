@@ -1,6 +1,5 @@
 import httpx
 import pytest
-from sqlalchemy import create_engine
 from sqlalchemy.sql import select
 
 from .. import app
@@ -10,10 +9,9 @@ from .common import FeedError, FeedPage, UpdateFeedHistory, crawl_feed_history
 
 @pytest.fixture
 def connection():
-    engine = create_engine("sqlite:///")
-    app.metadata.create_all(engine)
-    connection = engine.connect()
+    connection = app.engine.connect()
     tx = connection.begin()
+    app.metadata.create_all(connection)
     yield connection
     tx.rollback()
 

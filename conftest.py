@@ -1,5 +1,8 @@
 import pytest
+from starlette.config import environ
 from xml.sax.saxutils import quoteattr
+
+environ["DATABASE_URL"] = "sqlite:///"
 
 
 @pytest.fixture

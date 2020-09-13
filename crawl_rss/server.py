@@ -4,7 +4,8 @@ from starlette.responses import JSONResponse, RedirectResponse
 from starlette.requests import Request
 from starlette.routing import Route
 
-from .fetch import crawl, engine
+from .app import engine
+from .fetch import crawl
 from .feed_history import models
 
 
