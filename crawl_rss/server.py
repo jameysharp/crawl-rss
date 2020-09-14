@@ -4,13 +4,20 @@ from starlette.responses import JSONResponse, RedirectResponse
 from starlette.requests import Request
 from starlette.routing import Route
 
-from .app import engine
-from .fetch import crawl
+from .app import engine, metadata
 from .feed_history import models
+from .feed_history.common import crawl_feed_history
+from .feed_history.rfc5005 import from_rfc5005
+from .feed_history.wordpress import from_wordpress
 
 
 def crawl_feed(request: Request) -> RedirectResponse:
-    feed_id = crawl(request.path_params["url"])
+    metadata.create_all(engine)
+    crawlers = (from_rfc5005, from_wordpress)
+
+    with engine.begin() as connection:
+        feed_id = crawl_feed_history(connection, crawlers, request.path_params["url"])
+
     return RedirectResponse(request.url_for("list_posts", feed_id=feed_id))
 
 
