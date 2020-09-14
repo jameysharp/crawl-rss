@@ -1,4 +1,3 @@
-import httpx
 import pytest
 from sqlalchemy.sql import select
 
@@ -18,14 +17,14 @@ def connection():
 
 def test_archive_missing_current(mock_atom_feed):
     mock_atom_feed("https://crawl.example/feed-1", archive=True)
-    with httpx.Client() as http, pytest.raises(FeedError):
-        crawl_feed_history(None, http, (), "https://crawl.example/feed-1")
+    with pytest.raises(FeedError):
+        crawl_feed_history(None, (), "https://crawl.example/feed-1")
 
 
 def test_no_crawler(connection, mock_atom_feed):
     mock_atom_feed("https://crawl.example/feed")
-    with httpx.Client() as http, pytest.raises(FeedError):
-        crawl_feed_history(connection, http, (), "https://crawl.example/feed")
+    with pytest.raises(FeedError):
+        crawl_feed_history(connection, (), "https://crawl.example/feed")
 
 
 class MockCrawler:
@@ -49,10 +48,7 @@ def test_new_mock_crawler(connection, mock_atom_feed):
     mock_atom_feed("https://crawl.example/feed")
     crawler = MockCrawler("https://crawl.example/feed")
 
-    with httpx.Client() as http:
-        crawl_feed_history(
-            connection, http, [crawler.crawl], "https://crawl.example/feed"
-        )
+    crawl_feed_history(connection, [crawler.crawl], "https://crawl.example/feed")
 
     assert crawler.crawl_count == 1
     assert crawler.update_count == 1
@@ -69,10 +65,7 @@ def test_updated_mock_crawler(connection, mock_atom_feed):
     )
     feed_id = result.inserted_primary_key[0]
 
-    with httpx.Client() as http:
-        crawl_feed_history(
-            connection, http, [crawler.crawl], "https://crawl.example/feed"
-        )
+    crawl_feed_history(connection, [crawler.crawl], "https://crawl.example/feed")
 
     assert crawler.crawl_count == 1
     assert crawler.update_count == 1

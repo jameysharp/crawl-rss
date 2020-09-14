@@ -1,3 +1,4 @@
+import httpx
 import sqlalchemy
 from starlette.config import Config
 
@@ -8,6 +9,7 @@ DEBUG = config("DEBUG", cast=bool, default=False)
 DATABASE_URL = config("DATABASE_URL", default="sqlite:///db.sqlite")
 
 
+http_client = httpx.Client(headers={"User-Agent": "jamey@minilop.net"})
 metadata = sqlalchemy.MetaData()
 engine = sqlalchemy.create_engine(DATABASE_URL, echo=DEBUG)
 

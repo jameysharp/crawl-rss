@@ -1,5 +1,4 @@
 import datetime
-import httpx
 import pytest
 
 from .common import FeedDocument, FeedEntry, FeedPage
@@ -46,10 +45,7 @@ def expected_page(entries):
 def test_not_wordpress(mock_atom_feed):
     mock_atom_feed("https://rfc5005.example/feed.xml")
 
-    with httpx.Client() as http:
-        update = from_wordpress(
-            FeedDocument(http, "https://rfc5005.example/feed.xml"), []
-        )
+    update = from_wordpress(FeedDocument("https://rfc5005.example/feed.xml"), [])
 
     assert update is None
 
@@ -68,8 +64,7 @@ def test_identify_by_generator(httpx_mock, mock_atom_feed):
     mock_atom_feed(url_for(1), entries=[1])
     httpx_mock.add_response(url=url_for(2), status_code=404)
 
-    with httpx.Client() as http:
-        update = from_wordpress(FeedDocument(http, "https://wp.example/feed/"), [])
+    update = from_wordpress(FeedDocument("https://wp.example/feed/"), [])
 
     assert update is not None
     assert update.keep_existing == 0
@@ -83,8 +78,7 @@ def test_identify_by_generator(httpx_mock, mock_atom_feed):
 def test_new_feed(mock_wp_feed):
     mock_wp_feed([[1]])
 
-    with httpx.Client() as http:
-        update = from_wordpress(FeedDocument(http, "https://wp.example/feed/"), [])
+    update = from_wordpress(FeedDocument("https://wp.example/feed/"), [])
 
     assert update is not None
     assert update.keep_existing == 0
@@ -98,11 +92,10 @@ def test_new_feed(mock_wp_feed):
 def test_new_page(mock_wp_feed):
     mock_wp_feed([[1], [2]])
 
-    with httpx.Client() as http:
-        update = from_wordpress(
-            FeedDocument(http, "https://wp.example/feed/"),
-            [FeedPage(url=url_for(1), entries=expected_page([1]))],
-        )
+    update = from_wordpress(
+        FeedDocument("https://wp.example/feed/"),
+        [FeedPage(url=url_for(1), entries=expected_page([1]))],
+    )
 
     assert update is not None
     assert update.keep_existing == 1
@@ -116,14 +109,13 @@ def test_new_page(mock_wp_feed):
 def test_dropped_page(mock_wp_feed):
     mock_wp_feed([[1]])
 
-    with httpx.Client() as http:
-        update = from_wordpress(
-            FeedDocument(http, "https://wp.example/feed/"),
-            [
-                FeedPage(url=url_for(1), entries=expected_page([1])),
-                FeedPage(url=url_for(2), entries=expected_page([2])),
-            ],
-        )
+    update = from_wordpress(
+        FeedDocument("https://wp.example/feed/"),
+        [
+            FeedPage(url=url_for(1), entries=expected_page([1])),
+            FeedPage(url=url_for(2), entries=expected_page([2])),
+        ],
+    )
 
     assert update is not None
     assert update.keep_existing == 1
@@ -133,14 +125,13 @@ def test_dropped_page(mock_wp_feed):
 def test_changed_page(mock_wp_feed):
     mock_wp_feed([[1], [3]])
 
-    with httpx.Client() as http:
-        update = from_wordpress(
-            FeedDocument(http, "https://wp.example/feed/"),
-            [
-                FeedPage(url=url_for(1), entries=expected_page([1])),
-                FeedPage(url=url_for(2), entries=expected_page([2])),
-            ],
-        )
+    update = from_wordpress(
+        FeedDocument("https://wp.example/feed/"),
+        [
+            FeedPage(url=url_for(1), entries=expected_page([1])),
+            FeedPage(url=url_for(2), entries=expected_page([2])),
+        ],
+    )
 
     assert update is not None
     assert update.keep_existing == 1
@@ -154,14 +145,13 @@ def test_changed_page(mock_wp_feed):
 def test_changed_links(mock_wp_feed):
     mock_wp_feed([[1], [2]])
 
-    with httpx.Client() as http:
-        update = from_wordpress(
-            FeedDocument(http, "https://wp.example/feed/"),
-            [
-                FeedPage(url="https://wp.example/1/", entries=expected_page([1])),
-                FeedPage(url="https://wp.example/2/", entries=expected_page([2])),
-            ],
-        )
+    update = from_wordpress(
+        FeedDocument("https://wp.example/feed/"),
+        [
+            FeedPage(url="https://wp.example/1/", entries=expected_page([1])),
+            FeedPage(url="https://wp.example/2/", entries=expected_page([2])),
+        ],
+    )
 
     assert update is not None
     assert update.keep_existing == 0

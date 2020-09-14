@@ -1,5 +1,3 @@
-import httpx
-
 from .common import FeedDocument, FeedPage
 from .rfc5005 import from_rfc5005
 
@@ -12,10 +10,7 @@ def test_incomplete_feed(mock_atom_feed):
 
     mock_atom_feed("https://rfc5005.example/feed.xml")
 
-    with httpx.Client() as http:
-        update = from_rfc5005(
-            FeedDocument(http, "https://rfc5005.example/feed.xml"), []
-        )
+    update = from_rfc5005(FeedDocument("https://rfc5005.example/feed.xml"), [])
 
     assert update is None
 
@@ -32,11 +27,10 @@ def test_updated_complete_feed(mock_atom_feed):
         entries=[1],
     )
 
-    with httpx.Client() as http:
-        update = from_rfc5005(
-            FeedDocument(http, "https://rfc5005.example/feed.xml"),
-            [FeedPage(url="https://rfc5005.example/feed.xml")],
-        )
+    update = from_rfc5005(
+        FeedDocument("https://rfc5005.example/feed.xml"),
+        [FeedPage(url="https://rfc5005.example/feed.xml")],
+    )
 
     assert update is not None
     assert update.keep_existing == 0
@@ -70,10 +64,7 @@ def test_new_archived_feed(mock_atom_feed):
         entries=[2, 1],
     )
 
-    with httpx.Client() as http:
-        update = from_rfc5005(
-            FeedDocument(http, "https://rfc5005.example/feed.xml"), []
-        )
+    update = from_rfc5005(FeedDocument("https://rfc5005.example/feed.xml"), [])
 
     assert update is not None
     assert update.keep_existing == 0
@@ -118,14 +109,13 @@ def test_extended_archived_feed(mock_atom_feed):
         entries=[4, 3],
     )
 
-    with httpx.Client() as http:
-        update = from_rfc5005(
-            FeedDocument(http, "https://rfc5005.example/feed.xml"),
-            [
-                FeedPage(url="https://rfc5005.example/feed-1.xml"),
-                FeedPage(url="https://rfc5005.example/feed.xml"),
-            ],
-        )
+    update = from_rfc5005(
+        FeedDocument("https://rfc5005.example/feed.xml"),
+        [
+            FeedPage(url="https://rfc5005.example/feed-1.xml"),
+            FeedPage(url="https://rfc5005.example/feed.xml"),
+        ],
+    )
 
     assert update is not None
     assert update.keep_existing == 1
@@ -170,15 +160,14 @@ def test_revised_archived_feed(mock_atom_feed):
         entries=[4, 3],
     )
 
-    with httpx.Client() as http:
-        update = from_rfc5005(
-            FeedDocument(http, "https://rfc5005.example/feed.xml"),
-            [
-                FeedPage(url="https://rfc5005.example/feed-1.xml"),
-                FeedPage(url="https://rfc5005.example/feed-2.xml"),
-                FeedPage(url="https://rfc5005.example/feed.xml"),
-            ],
-        )
+    update = from_rfc5005(
+        FeedDocument("https://rfc5005.example/feed.xml"),
+        [
+            FeedPage(url="https://rfc5005.example/feed-1.xml"),
+            FeedPage(url="https://rfc5005.example/feed-2.xml"),
+            FeedPage(url="https://rfc5005.example/feed.xml"),
+        ],
+    )
 
     assert update is not None
     assert update.keep_existing == 1

@@ -3,13 +3,13 @@ from dataclasses import dataclass, field
 import datetime
 from enum import Enum
 import feedparser
-import httpx
 import operator
 from sqlalchemy.engine import Connection
 from sqlalchemy.sql import select
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Text, cast
 from urllib.parse import urljoin
 
+from .. import app
 from . import models
 
 
@@ -43,9 +43,8 @@ class FeedType(Enum):
 
 
 class FeedDocument(object):
-    def __init__(self, http: httpx.Client, url: Text, headers: Dict[Text, Text] = {}):
-        self.http = http
-        response = http.get(url, headers=headers)
+    def __init__(self, url: Text, headers: Dict[Text, Text] = {}):
+        response = app.http_client.get(url, headers=headers)
         response.raise_for_status()
 
         if "content-location" not in response.headers and response.url:
@@ -93,7 +92,7 @@ class FeedDocument(object):
     def follow(self, url: Text, headers: Dict[Text, Text] = {}) -> "FeedDocument":
         base_url = self.url
         headers = {"Referer": base_url, **headers}
-        return FeedDocument(self.http, urljoin(base_url, url), headers)
+        return FeedDocument(urljoin(base_url, url), headers)
 
 
 @dataclass(frozen=True)
@@ -146,10 +145,10 @@ Crawler = Callable[
 
 
 def crawl_feed_history(
-    connection: Connection, http: httpx.Client, crawlers: Iterable[Crawler], url: Text
+    connection: Connection, crawlers: Iterable[Crawler], url: Text
 ) -> int:
     while True:
-        base = FeedDocument(http, url)
+        base = FeedDocument(url)
 
         self = base.url
         if self and self != url:
