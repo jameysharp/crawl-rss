@@ -14,9 +14,9 @@ from crawl_rss.feed_history import models
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-fileConfig(config.config_file_name)
+# Interpret the config file for Python logging, but don't reset other logger
+# config, such as when used from pytest.
+fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -54,20 +54,27 @@ def run_migrations_offline():
 
 
 def run_migrations_online():
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
     """
-    connectable = engine_from_config(
+    Run migrations in 'online' mode.
+
+    In this scenario we need to create an Engine and associate a connection
+    with the context.
+    """
+
+    connectable = context.config.attributes.get("connection") or engine_from_config(
         config.get_section(config.config_ini_section),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            # per https://pytest-alembic.readthedocs.io/en/latest/setup.html#optional-but-helpful-additions
+            compare_type=True,
+            compare_server_default=True,
+        )
 
         with context.begin_transaction():
             context.run_migrations()

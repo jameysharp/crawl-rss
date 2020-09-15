@@ -429,6 +429,19 @@ testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xm
 
 [[package]]
 category = "dev"
+description = "A pytest plugin for verifying alembic migrations."
+name = "pytest-alembic"
+optional = false
+python-versions = ">=3.5,<4"
+version = "0.2.5"
+
+[package.dependencies]
+alembic = "*"
+pytest = ">=1.0"
+sqlalchemy = "*"
+
+[[package]]
+category = "dev"
 description = "A pytest plugin to enable format checking with black"
 name = "pytest-black"
 optional = false
@@ -680,7 +693,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "63b7d1d130959b8e5bc991c8c3af0132626eb03a2d3129ce9711ff1e1a585398"
+content-hash = "4abe92e51ac0883e83dca201cca29bbf6363f83d6fc9098227e0b3cbb792c87e"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -972,6 +985,10 @@ pyparsing = [
 pytest = [
     {file = "pytest-6.0.1-py3-none-any.whl", hash = "sha256:8b6007800c53fdacd5a5c192203f4e531eb2a1540ad9c752e052ec0f7143dbad"},
     {file = "pytest-6.0.1.tar.gz", hash = "sha256:85228d75db9f45e06e57ef9bf4429267f81ac7c0d742cc9ed63d09886a9fe6f4"},
+]
+pytest-alembic = [
+    {file = "pytest-alembic-0.2.5.tar.gz", hash = "sha256:c6da41f2c8ae0c50c9abe489586b5ae68287f4b1d728fc754f617d6528fbf4a1"},
+    {file = "pytest_alembic-0.2.5-py3-none-any.whl", hash = "sha256:2de79755b30425acd44fb98458c019f682c5d27502ae6872de2283043d693d7e"},
 ]
 pytest-black = [
     {file = "pytest-black-0.3.11.tar.gz", hash = "sha256:595eb0e7908b8a858a8564a5c8f0eae853c3926a4ec7b2afdfcedfa6fec65dd6"},
