@@ -25,9 +25,7 @@ feed_archive_pages = Table(
     "feed_archive_pages",
     app.metadata,
     Column("id", Integer, primary_key=True),
-    Column(
-        "feed_id", Integer, ForeignKey(feeds.c.id, ondelete="CASCADE"), nullable=False
-    ),
+    Column("feed_id", ForeignKey(feeds.c.id, ondelete="CASCADE"), nullable=False),
     Column("order", Integer, nullable=False),
     Column("url", Text, nullable=False),
     UniqueConstraint("feed_id", "order"),
@@ -40,7 +38,6 @@ feed_page_entries = Table(
     Column("id", Integer, primary_key=True),
     Column(
         "archive_page_id",
-        Integer,
         ForeignKey(feed_archive_pages.c.id, ondelete="CASCADE"),
         nullable=False,
     ),
