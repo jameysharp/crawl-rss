@@ -74,6 +74,8 @@ def run_migrations_online():
             # per https://pytest-alembic.readthedocs.io/en/latest/setup.html#optional-but-helpful-additions
             compare_type=True,
             compare_server_default=True,
+            # per https://alembic.sqlalchemy.org/en/latest/batch.html#batch-mode-with-autogenerate
+            render_as_batch=True,
         )
 
         with context.begin_transaction():
