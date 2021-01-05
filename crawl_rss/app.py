@@ -7,9 +7,15 @@ config = Config(".env")
 
 DEBUG = config("DEBUG", cast=bool, default=False)
 DATABASE_URL = config("DATABASE_URL", default="sqlite:///db.sqlite")
+HTTP_PROXY = config("HTTP_PROXY", default=None)
 
 
-http_client = httpx.Client(headers={"User-Agent": "jamey@minilop.net"})
+http_client = httpx.Client(
+    headers={"User-Agent": "jamey@minilop.net"},
+    # use forward-only mode so the proxy can see and cache even HTTPS requests
+    # https://www.python-httpx.org/advanced/#proxy-mechanisms
+    proxies=httpx.Proxy(url=HTTP_PROXY, mode="FORWARD_ONLY") if HTTP_PROXY else {},
+)
 
 metadata = sqlalchemy.MetaData(
     naming_convention={
