@@ -1,53 +1,19 @@
 import pytest
 from starlette.config import environ
-from xml.sax.saxutils import quoteattr
 
 environ["DATABASE_URL"] = "sqlite:///"
 
+# Must import this _after_ changing any settings in environ
+from crawl_rss import app
+
 
 @pytest.fixture
-def mock_atom_feed(httpx_mock):
-    def make(
-        url,
-        *,
-        headers={},
-        links={},
-        complete=False,
-        archive=False,
-        entries=[],
-    ):
-        data = [
-            '<feed xmlns="http://www.w3.org/2005/Atom">' "<id>urn:example:feed-id</id>"
-        ]
-
-        data.extend(
-            f"<link href={quoteattr(href)} rel={quoteattr(rel)}/>"
-            for rel, href in {"self": url, **links}.items()
-        )
-
-        if complete:
-            data.extend(
-                '<fh:complete xmlns:fh="http://purl.org/syndication/history/1.0"/>'
-            )
-        if archive:
-            data.extend(
-                '<fh:archive xmlns:fh="http://purl.org/syndication/history/1.0"/>'
-            )
-
-        data.extend(
-            "<entry>"
-            f"<id>urn:example:post-{entry}</id>"
-            f"<title>post #{entry}</title>"
-            f"<published>2020-01-{entry:02}T00:00:00Z</published>"
-            f"<updated>2020-01-{entry:02}T00:00:00Z</updated>"
-            "</entry>"
-            for entry in entries
-        )
-
-        data.append("</feed>")
-        httpx_mock.add_response(url=url, headers=headers, data="".join(data))
-
-    return make
+def connection():
+    connection = app.engine.connect()
+    tx = connection.begin()
+    app.metadata.create_all(connection)
+    yield connection
+    tx.rollback()
 
 
 def pytest_collection_modifyitems(items):

@@ -8,7 +8,7 @@ from alembic import context
 from crawl_rss import app
 
 # import models so target_metadata is populated
-from crawl_rss.feed_history import models
+from crawl_rss import models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
