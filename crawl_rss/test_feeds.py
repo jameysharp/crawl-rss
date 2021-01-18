@@ -39,6 +39,11 @@ def test_feed_parsing(httpx_mock):
         <itunes:season>4</itunes:season>
         <itunes:episode>5</itunes:episode>
     </entry>
+    <entry>
+        <id>urn:example:pub-upd</id>
+        <published>2020-04-01T00:00:00Z</published>
+        <updated>2020-05-01T00:00:00Z</updated>
+    </entry>
     </feed>
     """
 
@@ -65,6 +70,10 @@ def test_feed_parsing(httpx_mock):
         updated=datetime.datetime(2020, 3, 1),
         season=4,
         episode=5,
+    )
+    assert posts.pop("urn:example:pub-upd") == PostMetadata(
+        published=datetime.datetime(2020, 4, 1),
+        updated=datetime.datetime(2020, 5, 1),
     )
 
     assert not posts
