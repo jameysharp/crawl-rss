@@ -65,13 +65,11 @@ class DiffPosts:
         # which we can't do until the new pages have IDs assigned.
 
         page_ids = dict(
-            iter(
-                connection.execute(
-                    select([models.page.c.url, models.page.c.id])
-                    .where(models.page.c.feed_id == feed_id)
-                    .where(models.page.c.idx >= self.first_replaced_page)
-                )
-            )
+            connection.execute(
+                select([models.page.c.url, models.page.c.id])
+                .where(models.page.c.feed_id == feed_id)
+                .where(models.page.c.idx >= self.first_replaced_page)
+            ).fetchall()
         )
 
         add_page = models.page.insert()

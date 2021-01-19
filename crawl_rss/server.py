@@ -1,4 +1,5 @@
 import re
+from sqlalchemy import select
 from starlette.applications import Starlette
 from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse, RedirectResponse
@@ -7,6 +8,7 @@ from starlette.routing import Route
 from . import models
 from .app import engine
 from .crawl import crawl, DiffPosts
+from .feeds import FeedDocument
 
 
 POST_ORDERS = {
@@ -59,8 +61,17 @@ def list_posts(request: Request) -> JSONResponse:
     per_page = 25
 
     with engine.begin() as connection:
+        feed = connection.execute(
+            models.feed.outerjoin(models.proxy)
+            .select()
+            .where(models.feed.c.id == feed_id)
+        ).first()
+
+        if feed is None:
+            raise HTTPException(404, "no such feed")
+
         posts = connection.execute(
-            models.post.select()
+            select([models.post.c.page_id, models.post.c.guid])
             .where(models.post.c.feed_id == feed_id)
             .order_by(*order_clause)
             .limit(per_page)
@@ -71,24 +82,31 @@ def list_posts(request: Request) -> JSONResponse:
             raise HTTPException(404, "page does not exist")
 
         page_ids = {post[models.post.c.page_id] for post in posts}
-        pages = {
-            page[models.page.c.id]: page[models.page.c.url]
-            for page in connection.execute(
-                models.page.select().where(models.page.c.id.in_(page_ids))
+        pages = connection.execute(
+            select([models.page.c.id, models.page.c.url]).where(
+                models.page.c.id.in_(page_ids)
             )
+        ).fetchall()
+
+    proxy = feed[models.proxy.c.url]
+    full_posts = {}
+    for page_id, page_url in pages:
+        # Always fetch from cache if possible, for two reasons:
+        # - The cached copy is more likely to match what we saw the last time
+        #   we crawled this feed, so we have better odds of returning a result
+        #   that was at least valid then.
+        # - This is a latency-sensitive endpoint since a person is sitting on
+        #   the other end waiting to read whatever we pull up, so we should
+        #   retrieve the data they want from as close-by as possible.
+        doc = FeedDocument(page_url, proxy, headers={"Cache-Control": "max-stale"})
+        full_posts[page_id] = {
+            post.id: post for post in doc.doc.entries if "id" in post
         }
 
     return JSONResponse(
         {
             "posts": [
-                {
-                    "guid": post[models.post.c.guid],
-                    "page": pages[post[models.post.c.page_id]],
-                    "published": post[models.post.c.published].isoformat(),
-                    "updated": post[models.post.c.updated].isoformat(),
-                    "season": post[models.post.c.season],
-                    "episode": post[models.post.c.episode],
-                }
+                full_posts[post[models.post.c.page_id]][post[models.post.c.guid]]
                 for post in posts
             ],
             "links": {
