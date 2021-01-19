@@ -11,12 +11,12 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.sql import func
-from . import app
+from . import appconfig
 
 
 proxy = Table(
     "proxy",
-    app.metadata,
+    appconfig.metadata,
     Column("id", Integer, primary_key=True),
     Column("url", Text, unique=True, nullable=False),
     Column("name", UnicodeText, nullable=False),
@@ -25,7 +25,7 @@ proxy = Table(
 
 feed = Table(
     "feed",
-    app.metadata,
+    appconfig.metadata,
     Column("id", Integer, primary_key=True),
     Column("url", Text, unique=True, nullable=False),
     Column("proxy_id", ForeignKey(proxy.c.id, ondelete="RESTRICT")),
@@ -35,7 +35,7 @@ feed = Table(
 
 page = Table(
     "page",
-    app.metadata,
+    appconfig.metadata,
     Column("id", Integer, primary_key=True),
     Column("feed_id", ForeignKey(feed.c.id, ondelete="CASCADE"), nullable=False),
     Column("idx", Integer, nullable=False),
@@ -48,7 +48,7 @@ page = Table(
 # feed documents.
 post = Table(
     "post",
-    app.metadata,
+    appconfig.metadata,
     Column("id", Integer, primary_key=True),
     Column("guid", Text, nullable=False),
     # Note that a GUID may appear on multiple pages of an archived feed. To
@@ -73,21 +73,21 @@ post = Table(
 # A schema for https://tools.ietf.org/html/draft-snell-atompub-feed-index-10:
 # rank_scheme = Table(
 #    "rank_scheme",
-#    app.metadata,
+#    appconfig.metadata,
 #    Column("id", Integer, primary_key=True),
 #    Column("uri", Text, unique=True, nullable=False),
 # )
 #
 # rank_domain = Table(
 #    "rank_domain",
-#    app.metadata,
+#    appconfig.metadata,
 #    Column("id", Integer, primary_key=True),
 #    Column("uri", Text, unique=True, nullable=False),
 # )
 #
 # rank = Table(
 #    "rank",
-#    app.metadata,
+#    appconfig.metadata,
 #    Column("post_id", ForeignKey(post.c.id, ondelete="CASCADE"), nullable=False),
 #    Column("scheme_id", ForeignKey(rank_scheme.c.id, ondelete="RESTRICT"), nullable=False),
 #    Column("domain_id", ForeignKey(rank_domain.c.id, ondelete="RESTRICT"), nullable=False),

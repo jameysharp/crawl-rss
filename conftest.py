@@ -4,14 +4,14 @@ from starlette.config import environ
 environ["DATABASE_URL"] = "sqlite:///"
 
 # Must import this _after_ changing any settings in environ
-from crawl_rss import app
+from crawl_rss import appconfig
 
 
 @pytest.fixture
 def connection():
-    connection = app.engine.connect()
+    connection = appconfig.engine.connect()
     tx = connection.begin()
-    app.metadata.create_all(connection)
+    appconfig.metadata.create_all(connection)
     yield connection
     tx.rollback()
 

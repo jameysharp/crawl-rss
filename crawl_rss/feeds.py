@@ -2,7 +2,7 @@ import datetime
 import feedparser
 from sqlalchemy.engine import RowProxy
 from typing import cast, Dict, Mapping, NamedTuple, Optional, Text
-from . import app
+from . import appconfig
 from . import models
 
 
@@ -42,7 +42,7 @@ class FeedDocument:
     def __init__(
         self, url: Text, proxy: Optional[Text] = None, headers: Dict[Text, Text] = {}
     ):
-        response = app.http_client.get(
+        response = appconfig.http_client.get(
             url if proxy is None else proxy + url, headers=headers
         )
         response.raise_for_status()

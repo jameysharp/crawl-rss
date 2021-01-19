@@ -1,4 +1,4 @@
-import httpx
+import os
 import sqlalchemy
 from starlette.config import Config
 
@@ -8,6 +8,13 @@ config = Config(".env")
 DEBUG = config("DEBUG", cast=bool, default=False)
 DATABASE_URL = config("DATABASE_URL", default="sqlite:///db.sqlite")
 HTTP_PROXY = config("HTTP_PROXY", default=None)
+
+# https://www.python-httpx.org/environment_variables/#httpx_log_level
+if DEBUG:
+    os.environ["HTTPX_LOG_LEVEL"] = "debug"
+
+# Delay loading httpx until we've set its log level above
+import httpx
 
 
 http_client = httpx.Client(

@@ -5,7 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from crawl_rss import app
+from crawl_rss import appconfig
 
 # import models so target_metadata is populated
 from crawl_rss import models
@@ -20,8 +20,8 @@ fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-config.set_main_option("sqlalchemy.url", str(app.DATABASE_URL))
-target_metadata = app.metadata
+config.set_main_option("sqlalchemy.url", str(appconfig.DATABASE_URL))
+target_metadata = appconfig.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

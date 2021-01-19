@@ -5,8 +5,7 @@ from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse, RedirectResponse
 from starlette.requests import Request
 from starlette.routing import Route
-from . import models
-from .app import engine
+from . import appconfig, models
 from .crawl import crawl, DiffPosts
 from .feeds import FeedDocument
 
@@ -21,7 +20,7 @@ POST_ORDERS = {
 def crawl_feed(request: Request) -> RedirectResponse:
     url = request.path_params["url"]
 
-    with engine.begin() as connection:
+    with appconfig.engine.begin() as connection:
         feed = connection.execute(
             models.feed.select().where(models.feed.c.url == url)
         ).first()
@@ -60,7 +59,7 @@ def list_posts(request: Request) -> JSONResponse:
 
     per_page = 25
 
-    with engine.begin() as connection:
+    with appconfig.engine.begin() as connection:
         feed = connection.execute(
             models.feed.outerjoin(models.proxy)
             .select()
@@ -121,6 +120,7 @@ def list_posts(request: Request) -> JSONResponse:
 
 
 app = Starlette(
+    debug=appconfig.DEBUG,
     routes=[
         Route("/crawl/{url:path}", crawl_feed, name="crawl_feed"),
         Route("/posts/{feed_id:int}", list_posts, name="list_posts"),
