@@ -1,17 +1,14 @@
-with import <nixpkgs> {};
+{ pkgs ? import <nixpkgs> {} }:
 
-mkShell {
-  name = "crawl-rss";
+let
+  poetry2nix = import ./poetry.nix { inherit pkgs; };
+  app = poetry2nix.mkPoetryEnv {
+    projectDir = ./.;
+    editablePackageSources.crawl_rss = ./.;
 
-  buildInputs = [
-    (python3.withPackages (ps: [ ps.ipython ]))
-    poetry
-  ];
-
-  # settings to make various things work in virtualenv:
-
-  # set SOURCE_DATE_EPOCH to 1980 so that we can use python wheels
-  # https://nixos.org/nixpkgs/manual/#python-setup.py-bdist_wheel-cannot-create-.whl
-  SOURCE_DATE_EPOCH = 315532800;
-}
-
+    overrides = poetry2nix.overrides.withDefaults (self: super: {
+      # starlette source doesn't include py.typed but its wheel does
+      starlette = super.starlette.override { preferWheel = true; };
+    });
+  };
+in pkgs.mkShell { buildInputs = [ app pkgs.poetry ]; }
