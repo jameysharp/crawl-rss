@@ -7,7 +7,15 @@ let
 in pkgs.dockerTools.streamLayeredImage {
   name = "crawl-rss";
   contents = [
-    app.dependencyEnv
+    (app.dependencyEnv.override {
+      # Symlink the app itself into a common location. Since the resulting
+      # environment is part of the "contents" attribute, this symlink will be
+      # available at the root of the generated Docker image.
+      postBuild = ''
+        ln -s ${app}/${app.python.sitePackages} $out/app
+      '';
+    })
+
     # handy for `docker enter`:
     pkgs.busybox
   ];

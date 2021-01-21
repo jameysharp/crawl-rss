@@ -5,6 +5,7 @@ description = ""
 license = "AGPL-3.0-only"
 authors = ["Jamey Sharp <jamey@minilop.net>"]
 readme = "README.md"
+include = ["alembic.ini", "migrations/**/*.py"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
